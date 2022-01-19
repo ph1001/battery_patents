@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Unnecessary files produced on MacOS
+.DS_Store
+*.DS_Store
