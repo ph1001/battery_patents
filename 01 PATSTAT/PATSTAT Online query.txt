@@ -1,0 +1,150 @@
+-- One has to download this data year by year (and in my experience for 2019 even in two half-year segments). Otherwise the download never starts.
+-- Check the query section marked with -- Marker --
+-- This is where one has to adjust the time year / time frame to be downloaded.
+-- This code gets patent families in their entirety (all patent applications within the patent families that meet the defined criteria).
+
+SELECT
+a.docdb_family_id,
+a.appln_id, a.granted,
+a.earliest_filing_date, a.earliest_filing_year,
+a.earliest_publn_date, a.earliest_publn_year,
+string_agg(cast(c.ipc_class_symbol as NVARCHAR(MAX)), ',') as ipc_class_symbols,
+pa.applt_seq_nr, pa.invt_seq_nr,
+a.appln_auth, p.person_ctry_code,
+p.psn_name, p.han_name,
+t.appln_title, t.appln_title_lg, ab.appln_abstract, ab.appln_abstract_lg,
+-- the rest of the fields from TLS201_APPLN
+a.appln_nr,
+a.appln_kind,
+a.appln_filing_date,
+a.appln_filing_year,
+a.appln_nr_epodoc,
+a.appln_nr_original,
+a.ipr_type,
+a.receiving_office,
+a.internat_appln_id,
+a.int_phase,
+a.reg_phase,
+a.nat_phase,
+a.earliest_filing_id,
+a.earliest_pat_publn_id,
+a.inpadoc_family_id,
+a.docdb_family_size,
+a.nb_citing_docdb_fam,
+a.nb_applicants,
+a.nb_inventors,
+-- the rest of the fields from TLS206_PERSON
+p.person_id,
+p.person_name,
+p.person_name_orig_lg,
+p.person_address,
+p.nuts,
+p.nuts_level,
+p.doc_std_name_id,
+p.doc_std_name,
+p.psn_id,
+p.psn_level,
+p.psn_sector,
+p.han_id,
+p.han_harmonized,
+-- the rest of the fields from TLS209_APPLN_IPC in aggregated form
+string_agg(cast(c.ipc_class_level as NVARCHAR(MAX)), ',') as ipc_class_levels,
+string_agg(cast(c.ipc_version as NVARCHAR(MAX)), ',') as ipc_versions,
+string_agg(cast(c.ipc_value as NVARCHAR(MAX)), ',') as ipc_values,
+string_agg(cast(c.ipc_position as NVARCHAR(MAX)), ',') as ipc_positions,
+string_agg(cast(c.ipc_gener_auth as NVARCHAR(MAX)), ',') as ipc_gener_auths
+
+FROM 
+(((((tls201_appln a
+LEFT OUTER JOIN tls207_pers_appln pa ON a.appln_id = pa.appln_id)
+LEFT OUTER JOIN tls206_person p ON pa.person_id = p.person_id)
+LEFT OUTER JOIN tls202_appln_title t ON a.appln_id = t.appln_id)
+LEFT OUTER JOIN tls203_appln_abstr ab ON a.appln_id = ab.appln_id)
+LEFT OUTER JOIN tls209_appln_ipc c ON a.appln_id = c.appln_id)
+
+-- Collect all family IDs of patent families that fullfull the following two conditions:
+-- - Contains applications with at least one of the IPC codes of interest
+-- - The family's smallest (i.e. earliest) value of earliest_publn_date / earliest_publn_year is inside the defined time frame.
+-- This query structure's purpose is to return these patent families in their entirety.
+
+-- Time restriction
+WHERE a.docdb_family_id IN
+(
+SELECT t2.docdb_family_id
+FROM
+(
+SELECT a2.docdb_family_id,
+--MIN(a2.earliest_publn_date) as earliest_publn_date_family
+MIN(a2.earliest_publn_year) as earliest_publn_year_family
+FROM tls201_appln a2
+GROUP BY a2.docdb_family_id
+) AS t2
+
+-- Marker --
+-- This is where the year / timeframe is defined
+
+WHERE t2.earliest_publn_year_family = 2019
+
+--WHERE t2.earliest_publn_date_family >= '2017-01-01'
+--AND t2.earliest_publn_date_family <= '2017-06-30'
+
+--WHERE t2.earliest_publn_date_family >= '2017-07-01'
+--AND t2.earliest_publn_date_family <= '2017-12-31'
+
+)
+
+-- IPC classes restriction
+AND a.docdb_family_id IN
+(
+SELECT DISTINCT docdb_family_id
+FROM (tls201_appln a3 LEFT OUTER JOIN tls209_appln_ipc c3 ON a3.appln_id = c3.appln_id)
+WHERE
+(
+-- PROCESSES OR MEANS, e.g. BATTERIES, FOR THE DIRECT CONVERSION OF CHEMICAL ENERGY INTO ELECTRICAL ENERGY
+c3.ipc_class_symbol LIKE 'H01M%'
+-- Circuit arrangements for ac mains or ac distribution networks using batteries with converting means
+OR c3.ipc_class_symbol = 'H02J   3/32'
+-- Circuit arrangements for charging or depolarising batteries or for supplying loads from batteries
+OR c3.ipc_class_symbol LIKE 'H02J   7%'
+-- Methods of charging batteries, specially adapted for electric vehicles; Charging stations or on-board charging equipment therefor; Exchange of energy storage elements in electric vehicles
+OR c3.ipc_class_symbol LIKE 'B60L  53%'
+)
+)
+
+GROUP BY a.docdb_family_id, a.appln_id, a.granted, a.earliest_filing_date, a.earliest_filing_year, a.earliest_publn_date, a.earliest_publn_year, pa.applt_seq_nr, pa.invt_seq_nr, a.appln_auth, p.person_ctry_code, p.psn_name, p.han_name, t.appln_title, t.appln_title_lg, ab.appln_abstract, ab.appln_abstract_lg,
+-- the rest of the fields from TLS201_APPLN
+a.appln_nr,
+a.appln_kind,
+a.appln_filing_date,
+a.appln_filing_year,
+a.appln_nr_epodoc,
+a.appln_nr_original,
+a.ipr_type,
+a.receiving_office,
+a.internat_appln_id,
+a.int_phase,
+a.reg_phase,
+a.nat_phase,
+a.earliest_filing_id,
+a.earliest_pat_publn_id,
+a.inpadoc_family_id,
+a.docdb_family_size,
+a.nb_citing_docdb_fam,
+a.nb_applicants,
+a.nb_inventors,
+-- the rest of the fields from TLS206_PERSON
+p.person_id,
+p.person_name,
+p.person_name_orig_lg,
+p.person_address,
+p.nuts,
+p.nuts_level,
+p.doc_std_name_id,
+p.doc_std_name,
+p.psn_id,
+p.psn_level,
+p.psn_sector,
+p.han_id,
+p.han_harmonized
+
+ORDER BY a.docdb_family_id, pa.invt_seq_nr, pa.applt_seq_nr, a.earliest_publn_date ASC
