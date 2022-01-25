@@ -131,3 +131,7 @@ dmypy.json
 # Unnecessary files produced on MacOS
 .DS_Store
 *.DS_Store
+
+# Don't upload images
+*.eps
+*.png
