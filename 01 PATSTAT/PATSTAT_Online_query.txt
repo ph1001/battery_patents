@@ -1,6 +1,6 @@
 -- One has to download this data year by year (and in my experience for 2019 even in two half-year segments). Otherwise the download never starts.
 -- Check the query section marked with -- Marker --
--- This is where one has to adjust the time year / time frame to be downloaded.
+-- This is where one has to adjust the year / time frame to be downloaded.
 -- This code gets patent families in their entirety (all patent applications within the patent families that meet the defined criteria).
 
 SELECT
