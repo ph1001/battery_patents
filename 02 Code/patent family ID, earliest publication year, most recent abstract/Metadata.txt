@@ -1,0 +1,10 @@
+Number of rows: 92700 (= number of patent families)
+Number of columns: 3
+
+Description of columns:
+
+family_id: Identifier of this patent family
+
+earliest_publn_year_this_family_id: Earliest publication year associated with this patent family
+
+most_recent_abstract_this_family_id: The most recent abstract associated with this family ID. It is assumed that a patent family's most recent abstract is the best version.
